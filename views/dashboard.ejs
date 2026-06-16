@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Department Dashboard</title>
+</head>
+<body>
+
+<h1>Department Dashboard</h1>
+
+<a href="/create">Create Department</a>
+
+<br><br>
+
+<form method="GET" action="/dashboard">
+    <input
+        type="text"
+        name="search"
+        placeholder="Search Department"
+        value="<%= search %>"
+    >
+    <button type="submit">Search</button>
+</form>
+
+<br>
+
+<table border="1">
+
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Action</th>
+</tr>
+
+<% departments.forEach(function(dep){ %>
+
+<tr>
+    <td><%= dep.dept_id %></td>
+    <td><%= dep.dept_name %></td>
+    <td><%= dep.description %></td>
+
+    <td>
+        <a href="/edit/<%= dep.dept_id %>">Edit</a>
+
+        <a href="/delete/<%= dep.dept_id %>"
+           onclick="return confirm('Make this department inactive?')">
+           Delete
+        </a>
+    </td>
+</tr>
+
+<% }) %>
+
+</table>
+
+</body>
+</html>
