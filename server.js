@@ -9,6 +9,55 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+db.connect((err) => {
+  if (err) {
+    console.log("Database Connection Failed");
+    console.log(err);
+  } else {
+    console.log("Database Connected Successfully");
+
+    db.query(`
+      CREATE TABLE IF NOT EXISTS department (
+        dept_id INT AUTO_INCREMENT PRIMARY KEY,
+        dept_name VARCHAR(100) NOT NULL,
+        description VARCHAR(300),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        status TINYINT(1) DEFAULT 1
+      )
+    `, (err) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Department table created");
+
+        db.query(
+          "SELECT COUNT(*) AS total FROM department",
+          (err, result) => {
+            if (!err && result[0].total === 0) {
+              db.query(`
+                INSERT INTO department (dept_name, description, status)
+                VALUES
+                ('Computer Science Engineering (CSE)', 'Focuses on software development, programming, artificial intelligence, data structures, and computer systems.', 1),
+                ('Information Technology (IT)', 'Deals with networking, database management, cybersecurity, cloud computing, and IT infrastructure.', 1),
+                ('Electronics and Communication Engineering (ECE)', 'Covers electronic circuits, communication systems, embedded systems, and signal processing technologies.', 1),
+                ('Electrical Engineering (EE)', 'Focuses on power systems, electrical machines, control systems, and renewable energy technologies.', 1),
+                ('Mechanical Engineering (ME)', 'Involves machine design, manufacturing processes, thermodynamics, robotics, and industrial automation.', 1)
+              `, (err) => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log("Sample departments inserted");
+                }
+              });
+            }
+          }
+        );
+      }
+    });
+  }
+});
+
 // Home Route
 app.get("/", (req, res) => {
   res.redirect("/dashboard");
@@ -18,20 +67,21 @@ app.get("/", (req, res) => {
 app.get("/dashboard", (req, res) => {
   const search = req.query.search || "";
 
-  const sql =
-    "SELECT * FROM department WHERE status = 1 AND dept_name LIKE ?";
+  db.query(
+    "SELECT * FROM department WHERE status = 1 AND dept_name LIKE ?",
+    [`%${search}%`],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.send("Database Error");
+      }
 
-  db.query(sql, [`%${search}%`], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.send("Database Error");
+      res.render("dashboard", {
+        departments: result,
+        search: search,
+      });
     }
-
-    res.render("dashboard", {
-      departments: result,
-      search: search,
-    });
-  });
+  );
 });
 
 // Create Page
@@ -109,8 +159,8 @@ app.get("/delete/:id", (req, res) => {
   );
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Server Running on Port ${PORT}`);
-})
+});
